@@ -1,7 +1,7 @@
 # ELEC 3 – Node.js Self-Paced Learning Assignment
 
 **Name:** Rhuella Marie Untalan
-**Section:** IV-BSIT [A / B / C]
+**Section:** IV-BSIT A
 **Course:** ELEC 3 – Node.js
 **Instructor:** Carl Gustaf Patrik B. Ferrer
 
