@@ -1,27 +1,63 @@
 // Name: Rhuella Marie Untalan
 // Section: IV-BSIT A
-// Activity: N5
-// Date: December 2, 2026
-// server.js - REST-style API for books using the built-in http module
+// Activity: N6
+// Date: December 3, 2026
+// server.js - N5 books API extended with custom middleware
 
 const http = require("http");
 
 const PORT = 8000;
 
-// Data is kept in an array (no database)
 let books = [
   { id: 1, title: "Noli Me Tangere", author: "Jose Rizal", year: 1887 },
   { id: 2, title: "El Filibusterismo", author: "Jose Rizal", year: 1891 },
   { id: 3, title: "Dekada '70", author: "Lualhati Bautista", year: 1983 },
 ];
 
-// Sends any data as JSON with the given status code
+// ===================== MIDDLEWARE =====================
+
+// Middleware 1: logs the method, URL, and date/time of every request
+function logger(req, res, next) {
+  const time = new Date().toLocaleString();
+  console.log(`[${time}] ${req.method} ${req.url}`);
+  next(); // pass the request to the next middleware
+}
+
+// Middleware 2: sets the JSON header for every response,
+// so the route handlers no longer need to repeat it
+function jsonHeader(req, res, next) {
+  res.setHeader("Content-Type", "application/json");
+  next();
+}
+
+// The middleware run in this order before the routes
+const middlewares = [logger, jsonHeader];
+
+// Runs each middleware one by one; each one calls next()
+// to move on. After the last one, the routes run.
+function runMiddleware(req, res, finalHandler) {
+  let index = 0;
+  function next() {
+    const middleware = middlewares[index];
+    index++;
+    if (middleware) {
+      middleware(req, res, next);
+    } else {
+      finalHandler(req, res);
+    }
+  }
+  next();
+}
+
+// ===================== HELPERS =====================
+
+// Sends data as JSON. No Content-Type here anymore:
+// the jsonHeader middleware already set it.
 function sendJson(res, statusCode, data) {
-  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.statusCode = statusCode;
   res.end(JSON.stringify(data));
 }
 
-// Reads the request body and turns it into a JavaScript object
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -38,10 +74,9 @@ function readBody(req) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
-  console.log(`${req.method} ${req.url}`);
+// ===================== ROUTES =====================
 
-  // Split "/api/books/2" into ["api", "books", "2"]
+async function routes(req, res) {
   const parts = req.url.split("/").filter(Boolean);
   const isBooksRoute = parts[0] === "api" && parts[1] === "books";
   const id = parts[2] ? Number(parts[2]) : null;
@@ -51,12 +86,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    // GET /api/books - all books
+    // GET /api/books
     if (req.method === "GET" && id === null) {
       return sendJson(res, 200, books);
     }
 
-    // GET /api/books/:id - one book
+    // GET /api/books/:id
     if (req.method === "GET") {
       const book = books.find((b) => b.id === id);
       if (!book) {
@@ -65,7 +100,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, book);
     }
 
-    // POST /api/books - add a book
+    // POST /api/books
     if (req.method === "POST" && id === null) {
       const { title, author, year } = await readBody(req);
       if (!title || !author) {
@@ -77,7 +112,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 201, newBook);
     }
 
-    // PUT /api/books/:id - update a book
+    // PUT /api/books/:id
     if (req.method === "PUT" && id !== null) {
       const book = books.find((b) => b.id === id);
       if (!book) {
@@ -90,7 +125,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, book);
     }
 
-    // DELETE /api/books/:id - remove a book
+    // DELETE /api/books/:id
     if (req.method === "DELETE" && id !== null) {
       const book = books.find((b) => b.id === id);
       if (!book) {
@@ -100,14 +135,19 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { message: `Book with id ${id} deleted`, book });
     }
 
-    // Any other method on this route
     return sendJson(res, 405, { message: `${req.method} is not allowed here` });
   } catch (err) {
-    // Happens when the request body is not valid JSON
     return sendJson(res, 400, { message: "Invalid JSON in request body" });
   }
+}
+
+// ===================== SERVER =====================
+
+// Every request goes through the middleware first, then the routes
+const server = http.createServer((req, res) => {
+  runMiddleware(req, res, routes);
 });
 
 server.listen(PORT, () => {
-  console.log(`API is running at http://localhost:${PORT}/api/books`);
+  console.log(`API with middleware is running at http://localhost:${PORT}/api/books`);
 });
