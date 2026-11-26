@@ -1,0 +1,29 @@
+### 1. GET all books
+GET http://localhost:8000/api/books
+
+### 2. GET one book
+GET http://localhost:8000/api/books/2
+
+### 3. POST - add a book
+POST http://localhost:8000/api/books
+Content-Type: application/json
+
+{
+  "title": "Florante at Laura",
+  "author": "Francisco Balagtas",
+  "year": 1838
+}
+
+### 4. PUT - update a book
+PUT http://localhost:8000/api/books/1
+Content-Type: application/json
+
+{
+  "year": 1888
+}
+
+### 5. DELETE - remove a book
+DELETE http://localhost:8000/api/books/3
+
+### 6. GET a book that does not exist (404)
+GET http://localhost:8000/api/books/99
