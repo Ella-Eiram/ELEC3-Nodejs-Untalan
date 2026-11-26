@@ -1,8 +1,8 @@
-# N5 – REST-style API (Books)
+# N6 – Middleware and API Testing (Books API)
 
 **Rhuella Marie Untalan | IV-BSIT A | ELEC 3 – Node.js**
 
-A simple REST-style API built with the built-in `http` module. The data is kept in an array inside the program (no database), starting with 3 sample books.
+This is my N5 books API extended with two custom middleware functions: a **logger** that prints the method, URL, and date/time of every request, and a **JSON header** middleware that sets `Content-Type: application/json` for all responses. Every endpoint was tested with the **REST Client** extension in VS Code (see `requests.http`).
 
 ## How to run
 
